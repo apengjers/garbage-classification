@@ -150,9 +150,11 @@ import {
   Text,
   View,
 } from "react-native";
+import { useModel } from "../src/context/ModelContext";
+import { imageToTensor } from "../src/helpers/image";
+import { predict } from "../src/helpers/model";
 
-import { imageToTensor } from "./helpers/image";
-import { loadModel, predict } from "./helpers/model";
+const { model, loading } = useModel();
 
 const LABELS = [
   "Kaca",
@@ -176,11 +178,14 @@ export default function Result() {
   const run = async () => {
     try {
       if (!image) return;
+      if (!model) {
+        setResultText("Model belum dimuat");
+        return;
+      }
 
-      const model = await loadModel();
+      const result = model.predict(imageToTensor(image)) as any;
       const tensor = await imageToTensor(image);
-
-      const probs = await predict(tensor);
+      const probs = result.DataSync(predict(tensor));
 
       let bestIndex = 0;
       for (let i = 1; i < probs.length; i++) {
@@ -198,6 +203,27 @@ export default function Result() {
     }
   };
 
+  const getDescription = (label: string) => {
+    switch (label) {
+      case "memproses gambar...":
+        return "Model sedang dimuat, harap tunggu...";
+      case "Kaca":
+        return "Kaca adalah bahan yang dapat didaur ulang dan digunakan kembali untuk membuat berbagai produk seperti botol, jendela, dan peralatan rumah tangga. Daur ulang kaca membantu mengurangi limbah dan konservasi sumber daya alam.";
+      case "Kertas":
+        return "Kertas adalah bahan yang dapat didaur ulang dan digunakan kembali untuk membuat berbagai produk seperti buku, koran, dan kemasan. Daur ulang kertas membantu mengurangi limbah dan konservasi sumber daya alam.";
+      case "Karton":
+        return "Karton adalah jenis kertas yang lebih tebal dan kuat, sering digunakan untuk kemasan. Daur ulang karton membantu mengurangi limbah dan konservasi sumber daya alam.";
+      case "Logam":
+        return "Logam adalah bahan yang dapat didaur ulang dan digunakan kembali untuk membuat berbagai produk seperti kaleng, peralatan, dan kendaraan. Daur ulang logam membantu mengurangi limbah dan konservasi sumber daya alam.";
+      case "Plastik":
+        return "Plastik adalah bahan yang dapat didaur ulang dan digunakan kembali untuk membuat berbagai produk seperti botol, kantong, dan peralatan rumah tangga. Daur ulang plastik membantu mengurangi limbah dan konservasi sumber daya alam.";
+      case "Sampah Campuran":
+        return "Sampah campuran adalah jenis limbah yang terdiri dari berbagai bahan yang tidak dapat didaur ulang. Penting untuk memisahkan sampah campuran dari bahan yang dapat didaur ulang untuk mengurangi dampak lingkungan.";
+      default:
+        return "Tidak ada deskripsi tersedia untuk kategori ini.";
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Hasil Scan</Text>
@@ -205,9 +231,14 @@ export default function Result() {
       {image && <Image source={{ uri: image }} style={styles.image} />}
 
       {loading ? (
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" style={{ marginBottom: 20 }} />
       ) : (
-        <Text style={styles.result}>{resultText}</Text>
+        <>
+          <Text style={styles.result}>{resultText}</Text>
+          <Text style={styles.description}>
+            {getDescription(resultText.split(" (")[0])}
+          </Text>
+        </>
       )}
 
       <Button title="Scan lagi" onPress={() => router.back()} />
@@ -218,6 +249,13 @@ export default function Result() {
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: "center", padding: 20 },
   title: { fontSize: 22, fontWeight: "bold" },
-  image: { width: 250, height: 250, marginTop: 20 },
-  result: { fontSize: 18, marginTop: 20 },
+  image: {
+    width: 250,
+    height: 250,
+    marginTop: 20,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  result: { fontSize: 18, marginTop: 20, marginBottom: 10 },
+  description: { fontSize: 16, textAlign: "justify", marginBottom: 20 },
 });
