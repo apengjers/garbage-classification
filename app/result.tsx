@@ -154,8 +154,6 @@ import { useModel } from "../src/context/ModelContext";
 import { imageToTensor } from "../src/helpers/image";
 import { predict } from "../src/helpers/model";
 
-const { model, loading } = useModel();
-
 const LABELS = [
   "Kaca",
   "Karton",
@@ -166,6 +164,7 @@ const LABELS = [
 ];
 
 export default function Result() {
+  const { model, loading } = useModel();
   const { image } = useLocalSearchParams<{ image: string }>();
 
   const [loading, setLoading] = useState(true);
