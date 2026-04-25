@@ -150,9 +150,9 @@ import {
   Text,
   View,
 } from "react-native";
-import { useModel } from "../src/context/ModelContext";
+
 import { imageToTensor } from "../src/helpers/image";
-import { predict } from "../src/helpers/model";
+import { loadModel, predict } from "../src/helpers/model";
 
 const LABELS = [
   "Kaca",
@@ -164,7 +164,6 @@ const LABELS = [
 ];
 
 export default function Result() {
-  const { model, loading } = useModel();
   const { image } = useLocalSearchParams<{ image: string }>();
 
   const [loading, setLoading] = useState(true);
@@ -177,14 +176,11 @@ export default function Result() {
   const run = async () => {
     try {
       if (!image) return;
-      if (!model) {
-        setResultText("Model belum dimuat");
-        return;
-      }
 
-      const result = model.predict(imageToTensor(image)) as any;
+      const model = await loadModel();
       const tensor = await imageToTensor(image);
-      const probs = result.DataSync(predict(tensor));
+
+      const probs = await predict(tensor);
 
       let bestIndex = 0;
       for (let i = 1; i < probs.length; i++) {
@@ -230,7 +226,7 @@ export default function Result() {
       {image && <Image source={{ uri: image }} style={styles.image} />}
 
       {loading ? (
-        <ActivityIndicator size="large" style={{ marginBottom: 20 }} />
+        <ActivityIndicator size="large" style={styles.loading} />
       ) : (
         <>
           <Text style={styles.result}>{resultText}</Text>
@@ -248,13 +244,8 @@ export default function Result() {
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: "center", padding: 20 },
   title: { fontSize: 22, fontWeight: "bold" },
-  image: {
-    width: 250,
-    height: 250,
-    marginTop: 20,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  result: { fontSize: 18, marginTop: 20, marginBottom: 10 },
+  image: { width: 250, height: 250, marginTop: 20, borderRadius: 15 },
+  result: { fontSize: 18, marginTop: 20 },
+  loading: { marginTop: 20, marginBottom: 20 },
   description: { fontSize: 16, textAlign: "justify", marginBottom: 20 },
 });

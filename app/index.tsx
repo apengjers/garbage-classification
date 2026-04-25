@@ -1,5 +1,5 @@
 import { ScrollView, StyleSheet, View } from "react-native";
-import Home from "./components/home";
+import Home from "../src/components/home";
 
 export default function Index() {
   return (

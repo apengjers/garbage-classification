@@ -3,9 +3,15 @@ import "@tensorflow/tfjs-react-native";
 import { bundleResourceIO } from "@tensorflow/tfjs-react-native";
 import { createContext, useContext, useEffect, useState } from "react";
 
-const ModelContext = createContext<any>(null);
+type ModelContextType = {
+  model: any;
+  loading: boolean;
+};
+
+const ModelContext = createContext<ModelContextType | null>(null);
 
 export const ModelProvider = ({ children }: { children: any }) => {
+  console.log("provider mounted");
   const [model, setModel] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -38,4 +44,12 @@ export const ModelProvider = ({ children }: { children: any }) => {
   );
 };
 
-export const useModel = () => useContext(ModelContext);
+export const useModel = () => {
+  const ctx = useContext(ModelContext);
+
+  if (!ctx) {
+    throw new Error("useModel must be inside ModelProvider");
+  }
+
+  return ctx;
+};
