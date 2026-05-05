@@ -219,6 +219,24 @@ export default function Result() {
     }
   };
 
+  const getCategory = (label: string) => {
+    switch (label) {
+      case "Kaca":
+      case "Karton":
+      case "Kertas":
+      case "Logam":
+      case "Plastik":
+        return "Anorganik";
+      case "Sampah Campuran":
+        return "Residu"; // Campuran biasanya sulit dipilah, lebih cocok disebut Residu
+      case "Sisa Makanan":
+      case "Daun":
+        return "Organik";
+      default:
+        return "Tidak Dikenal";
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Hasil Scan</Text>
@@ -229,6 +247,9 @@ export default function Result() {
         <ActivityIndicator size="large" style={styles.loading} />
       ) : (
         <>
+          <Text style={styles.category}>
+            Kategori: {getCategory(resultText.split(" (")[0])}
+          </Text>
           <Text style={styles.result}>{resultText}</Text>
           <Text style={styles.description}>
             {getDescription(resultText.split(" (")[0])}
@@ -245,7 +266,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, alignItems: "center", padding: 20 },
   title: { fontSize: 22, fontWeight: "bold" },
   image: { width: 250, height: 250, marginTop: 20, borderRadius: 15 },
-  result: { fontSize: 18, marginTop: 20 },
+  result: { fontSize: 18, marginTop: 5 },
   loading: { marginTop: 20, marginBottom: 20 },
   description: { fontSize: 16, textAlign: "justify", marginBottom: 20 },
+  category: { fontSize: 16, fontWeight: "bold", marginTop: 10 },
 });

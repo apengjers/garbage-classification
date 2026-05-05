@@ -2,7 +2,7 @@ const { getDefaultConfig } = require("expo/metro-config");
 
 const config = getDefaultConfig(__dirname);
 
-// 👇 ini penting
+// DONT DELETE THIS LINE, IT IS NEEDED TO LOAD THE BIN FILES
 config.resolver.assetExts.push("bin");
 
 module.exports = config;
