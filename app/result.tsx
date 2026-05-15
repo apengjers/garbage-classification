@@ -4,7 +4,6 @@ import {
   ActivityIndicator,
   Image,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -14,18 +13,12 @@ import { imageToTensor } from "../src/helpers/image";
 import { loadModel, predict } from "../src/helpers/model";
 
 const LABELS = [
-  "Baterai",
-  "Besi",
-  "Biologis",
-  "Kaca Bening",
-  "Kaca Coklat",
-  "Kaca Hijau",
+  "Kaca",
   "Karton",
   "Kertas",
-  "Pakaian",
+  "Logam",
   "Plastik",
-  "Sampah Campuran",
-  "Sepatu",
+  "sampahCampuran",
 ];
 
 const LABEL_INFO: Record<
@@ -35,71 +28,35 @@ const LABEL_INFO: Record<
     description: string;
   }
 > = {
-  Baterai: {
-    category: "B3",
-    description:
-      "Baterai termasuk limbah berbahaya dan tidak boleh dibuang sembarangan.",
-  },
-
-  Besi: {
-    category: "Daur Ulang",
-    description: "Besi dapat didaur ulang menjadi berbagai produk logam baru.",
-  },
-
-  Biologis: {
-    category: "Organik",
-    description:
-      "Sampah biologis dapat diolah menjadi kompos atau pupuk organik.",
-  },
-
-  "Kaca Bening": {
+  Kaca: {
     category: "Daur Ulang",
     description:
-      "Kaca bening dapat didaur ulang menjadi botol atau produk kaca baru.",
+      "Sampah kaca dapat didaur ulang menjadi produk baru seperti botol dan gelas. Pastikan untuk membuangnya di tempat sampah yang sesuai.",
   },
-
-  "Kaca Coklat": {
-    category: "Daur Ulang",
-    description:
-      "Kaca coklat dapat diproses kembali menjadi kemasan kaca baru.",
-  },
-
-  "Kaca Hijau": {
-    category: "Daur Ulang",
-    description:
-      "Kaca hijau dapat didaur ulang untuk mengurangi limbah lingkungan.",
-  },
-
   Karton: {
     category: "Daur Ulang",
-    description: "Karton dapat didaur ulang menjadi kemasan atau kertas baru.",
+    description:
+      "Sampah karton dapat didaur ulang menjadi produk baru seperti kotak dan kertas. Pastikan untuk membuangnya di tempat sampah yang sesuai.",
   },
-
   Kertas: {
     category: "Daur Ulang",
-    description: "Kertas dapat diproses kembali menjadi produk kertas baru.",
-  },
-
-  Pakaian: {
-    category: "Reuse",
     description:
-      "Pakaian bekas masih dapat digunakan kembali atau didonasikan.",
+      "Sampah kertas dapat didaur ulang menjadi produk baru seperti kertas dan koran. Pastikan untuk membuangnya di tempat sampah yang sesuai.",
   },
-
+  Logam: {
+    category: "Daur Ulang",
+    description:
+      "Sampah logam dapat didaur ulang menjadi produk baru seperti alat rumah tangga dan kendaraan. Pastikan untuk membuangnya di tempat sampah yang sesuai.",
+  },
   Plastik: {
     category: "Daur Ulang",
-    description: "Plastik dapat didaur ulang menjadi berbagai produk baru.",
+    description:
+      "Sampah plastik dapat didaur ulang menjadi produk baru seperti kantong dan mainan. Pastikan untuk membuangnya di tempat sampah yang sesuai.",
   },
-
-  "Sampah Campuran": {
+  sampahCampuran: {
     category: "Residu",
     description:
-      "Sampah campuran sulit dipisahkan dan biasanya menjadi limbah residu.",
-  },
-
-  Sepatu: {
-    category: "Reuse",
-    description: "Sepatu bekas masih bisa digunakan kembali atau didonasikan.",
+      "Sampah campuran sulit dipisahkan dan umumnya menjadi limbah residu.",
   },
 };
 
@@ -114,10 +71,10 @@ export default function Result() {
   } | null>(null);
 
   useEffect(() => {
-    runPrediction();
+    run();
   }, []);
 
-  const runPrediction = async () => {
+  const run = async () => {
     try {
       if (!image) return;
 
@@ -154,19 +111,19 @@ export default function Result() {
   const info = result ? LABEL_INFO[result.label] : null;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Hasil Scan</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Hasil Scan Sampah</Text>
 
       {image && <Image source={{ uri: image }} style={styles.image} />}
 
       {loading ? (
-        <ActivityIndicator size="large" color="#22C55E" style={styles.loader} />
+        <ActivityIndicator size="large" style={styles.loading} />
       ) : (
         <View style={styles.card}>
           <Text style={styles.label}>{result?.label}</Text>
 
           <Text style={styles.confidence}>
-            Akurasi {result?.confidence.toFixed(1)}%
+            Akurasi: {result?.confidence.toFixed(1)}%
           </Text>
 
           <View style={styles.badge}>
@@ -180,100 +137,94 @@ export default function Result() {
       <Pressable style={styles.button} onPress={() => router.back()}>
         <Text style={styles.buttonText}>Scan Lagi</Text>
       </Pressable>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
+    padding: 24,
     alignItems: "center",
-    paddingHorizontal: 24,
+    backgroundColor: "#F5F7FA",
   },
 
   title: {
-    marginTop: 40,
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: "700",
-    color: "#111827",
+    marginTop: 20,
     marginBottom: 20,
+    color: "#111827",
   },
 
   image: {
-    width: 280,
-    height: 280,
-    borderRadius: 24,
+    width: 260,
+    height: 260,
+    borderRadius: 20,
     marginBottom: 24,
   },
 
-  loader: {
-    marginTop: 40,
+  loading: {
+    marginTop: 30,
   },
 
   card: {
     width: "100%",
     backgroundColor: "#FFFFFF",
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: 20,
+    padding: 20,
     alignItems: "center",
-
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
     shadowOpacity: 0.08,
-    shadowRadius: 12,
-
-    elevation: 5,
+    shadowRadius: 10,
+    elevation: 4,
   },
 
   label: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "700",
     color: "#111827",
   },
 
   confidence: {
-    marginTop: 10,
     fontSize: 16,
-    color: "#6B7280",
+    marginTop: 8,
+    color: "#4B5563",
   },
 
   badge: {
-    marginTop: 16,
+    marginTop: 14,
     backgroundColor: "#DCFCE7",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: 999,
   },
 
   badgeText: {
-    color: "#166534",
-    fontWeight: "700",
     fontSize: 14,
+    fontWeight: "600",
+    color: "#166534",
   },
 
   description: {
     marginTop: 18,
-    textAlign: "center",
-    lineHeight: 24,
     fontSize: 15,
-    color: "#4B5563",
+    lineHeight: 24,
+    textAlign: "center",
+    color: "#374151",
   },
 
   button: {
-    marginTop: 28,
-    backgroundColor: "#22C55E",
-    paddingVertical: 16,
-    paddingHorizontal: 36,
-    borderRadius: 16,
+    marginTop: 30,
+    backgroundColor: "#2563EB",
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 14,
   },
 
   buttonText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "600",
   },
 });
