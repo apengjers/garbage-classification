@@ -2,8 +2,9 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Button,
   Image,
+  Pressable,
+  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -13,119 +14,266 @@ import { imageToTensor } from "../src/helpers/image";
 import { loadModel, predict } from "../src/helpers/model";
 
 const LABELS = [
-  "Kaca",
+  "Baterai",
+  "Besi",
+  "Biologis",
+  "Kaca Bening",
+  "Kaca Coklat",
+  "Kaca Hijau",
   "Karton",
   "Kertas",
-  "Logam",
+  "Pakaian",
   "Plastik",
   "Sampah Campuran",
+  "Sepatu",
 ];
+
+const LABEL_INFO: Record<
+  string,
+  {
+    category: string;
+    description: string;
+  }
+> = {
+  Baterai: {
+    category: "B3",
+    description:
+      "Baterai termasuk limbah berbahaya dan tidak boleh dibuang sembarangan.",
+  },
+
+  Besi: {
+    category: "Daur Ulang",
+    description: "Besi dapat didaur ulang menjadi berbagai produk logam baru.",
+  },
+
+  Biologis: {
+    category: "Organik",
+    description:
+      "Sampah biologis dapat diolah menjadi kompos atau pupuk organik.",
+  },
+
+  "Kaca Bening": {
+    category: "Daur Ulang",
+    description:
+      "Kaca bening dapat didaur ulang menjadi botol atau produk kaca baru.",
+  },
+
+  "Kaca Coklat": {
+    category: "Daur Ulang",
+    description:
+      "Kaca coklat dapat diproses kembali menjadi kemasan kaca baru.",
+  },
+
+  "Kaca Hijau": {
+    category: "Daur Ulang",
+    description:
+      "Kaca hijau dapat didaur ulang untuk mengurangi limbah lingkungan.",
+  },
+
+  Karton: {
+    category: "Daur Ulang",
+    description: "Karton dapat didaur ulang menjadi kemasan atau kertas baru.",
+  },
+
+  Kertas: {
+    category: "Daur Ulang",
+    description: "Kertas dapat diproses kembali menjadi produk kertas baru.",
+  },
+
+  Pakaian: {
+    category: "Reuse",
+    description:
+      "Pakaian bekas masih dapat digunakan kembali atau didonasikan.",
+  },
+
+  Plastik: {
+    category: "Daur Ulang",
+    description: "Plastik dapat didaur ulang menjadi berbagai produk baru.",
+  },
+
+  "Sampah Campuran": {
+    category: "Residu",
+    description:
+      "Sampah campuran sulit dipisahkan dan biasanya menjadi limbah residu.",
+  },
+
+  Sepatu: {
+    category: "Reuse",
+    description: "Sepatu bekas masih bisa digunakan kembali atau didonasikan.",
+  },
+};
 
 export default function Result() {
   const { image } = useLocalSearchParams<{ image: string }>();
 
   const [loading, setLoading] = useState(true);
-  const [resultText, setResultText] = useState("");
+
+  const [result, setResult] = useState<{
+    label: string;
+    confidence: number;
+  } | null>(null);
 
   useEffect(() => {
-    run();
+    runPrediction();
   }, []);
 
-  const run = async () => {
+  const runPrediction = async () => {
     try {
       if (!image) return;
 
-      const model = await loadModel();
+      await loadModel();
+
       const tensor = await imageToTensor(image);
 
       const probs = await predict(tensor);
 
       let bestIndex = 0;
+
       for (let i = 1; i < probs.length; i++) {
-        if (probs[i] > probs[bestIndex]) bestIndex = i;
+        if (probs[i] > probs[bestIndex]) {
+          bestIndex = i;
+        }
       }
 
-      setResultText(
-        `${LABELS[bestIndex]} (${(probs[bestIndex] * 100).toFixed(1)}%)`,
-      );
-    } catch (err) {
-      console.log(err);
-      setResultText("error");
+      setResult({
+        label: LABELS[bestIndex],
+        confidence: probs[bestIndex] * 100,
+      });
+    } catch (error) {
+      console.log(error);
+
+      setResult({
+        label: "Error",
+        confidence: 0,
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const getDescription = (label: string) => {
-    switch (label) {
-      case "memproses gambar...":
-        return "Model sedang dimuat, harap tunggu...";
-      case "Kaca":
-        return "Kaca adalah bahan yang dapat didaur ulang dan digunakan kembali untuk membuat berbagai produk seperti botol, jendela, dan peralatan rumah tangga. Daur ulang kaca membantu mengurangi limbah dan konservasi sumber daya alam.";
-      case "Kertas":
-        return "Kertas adalah bahan yang dapat didaur ulang dan digunakan kembali untuk membuat berbagai produk seperti buku, koran, dan kemasan. Daur ulang kertas membantu mengurangi limbah dan konservasi sumber daya alam.";
-      case "Karton":
-        return "Karton adalah jenis kertas yang lebih tebal dan kuat, sering digunakan untuk kemasan. Daur ulang karton membantu mengurangi limbah dan konservasi sumber daya alam.";
-      case "Logam":
-        return "Logam adalah bahan yang dapat didaur ulang dan digunakan kembali untuk membuat berbagai produk seperti kaleng, peralatan, dan kendaraan. Daur ulang logam membantu mengurangi limbah dan konservasi sumber daya alam.";
-      case "Plastik":
-        return "Plastik adalah bahan yang dapat didaur ulang dan digunakan kembali untuk membuat berbagai produk seperti botol, kantong, dan peralatan rumah tangga. Daur ulang plastik membantu mengurangi limbah dan konservasi sumber daya alam.";
-      case "Sampah Campuran":
-        return "Sampah campuran adalah jenis limbah yang terdiri dari berbagai bahan yang tidak dapat didaur ulang. Penting untuk memisahkan sampah campuran dari bahan yang dapat didaur ulang untuk mengurangi dampak lingkungan.";
-      default:
-        return "Tidak ada deskripsi tersedia untuk kategori ini.";
-    }
-  };
-
-  const getCategory = (label: string) => {
-    switch (label) {
-      case "Kaca":
-      case "Karton":
-      case "Kertas":
-      case "Logam":
-      case "Plastik":
-        return "Anorganik";
-      case "Sampah Campuran":
-        return "Residu";
-      case "Sisa Makanan":
-      case "Daun":
-        return "Organik";
-      default:
-        return "Tidak Dikenal";
-    }
-  };
+  const info = result ? LABEL_INFO[result.label] : null;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Hasil Scan</Text>
 
       {image && <Image source={{ uri: image }} style={styles.image} />}
 
       {loading ? (
-        <ActivityIndicator size="large" style={styles.loading} />
+        <ActivityIndicator size="large" color="#22C55E" style={styles.loader} />
       ) : (
-        <>
-          <Text style={styles.category}>
-            Kategori: {getCategory(resultText.split(" (")[0])}
+        <View style={styles.card}>
+          <Text style={styles.label}>{result?.label}</Text>
+
+          <Text style={styles.confidence}>
+            Akurasi {result?.confidence.toFixed(1)}%
           </Text>
-          <Text style={styles.result}>{resultText}</Text>
-          <Text style={styles.description}>
-            {getDescription(resultText.split(" (")[0])}
-          </Text>
-        </>
+
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{info?.category}</Text>
+          </View>
+
+          <Text style={styles.description}>{info?.description}</Text>
+        </View>
       )}
 
-      <Button title="Scan lagi" onPress={() => router.back()} />
-    </View>
+      <Pressable style={styles.button} onPress={() => router.back()}>
+        <Text style={styles.buttonText}>Scan Lagi</Text>
+      </Pressable>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: "center", padding: 20 },
-  title: { fontSize: 22, fontWeight: "bold" },
-  image: { width: 250, height: 250, marginTop: 20, borderRadius: 15 },
-  result: { fontSize: 18, marginTop: 5 },
-  loading: { marginTop: 20, marginBottom: 20 },
-  description: { fontSize: 16, textAlign: "justify", marginBottom: 20 },
-  category: { fontSize: 16, fontWeight: "bold", marginTop: 10 },
+  container: {
+    flex: 1,
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+
+  title: {
+    marginTop: 40,
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 20,
+  },
+
+  image: {
+    width: 280,
+    height: 280,
+    borderRadius: 24,
+    marginBottom: 24,
+  },
+
+  loader: {
+    marginTop: 40,
+  },
+
+  card: {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 24,
+    alignItems: "center",
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+
+    elevation: 5,
+  },
+
+  label: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#111827",
+  },
+
+  confidence: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#6B7280",
+  },
+
+  badge: {
+    marginTop: 16,
+    backgroundColor: "#DCFCE7",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+
+  badgeText: {
+    color: "#166534",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+
+  description: {
+    marginTop: 18,
+    textAlign: "center",
+    lineHeight: 24,
+    fontSize: 15,
+    color: "#4B5563",
+  },
+
+  button: {
+    marginTop: 28,
+    backgroundColor: "#22C55E",
+    paddingVertical: 16,
+    paddingHorizontal: 36,
+    borderRadius: 16,
+  },
+
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
 });
